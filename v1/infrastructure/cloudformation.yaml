@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: A stack for deploying containerized applications in AWS Fargate.
+             This stack runs containers in a public or private VPC subnet. 
+
+Resources:  
+  Cluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties: 
+       CapacityProviders:
+          - FARGATE
+       ClusterName: ECS-CLUSTER
+    
+    
+# Mappings:
+  # The VPC and subnet configuration is passed in via the environment spec.
+  # SubnetConfig:
+    # VPC:
+      # CIDR: '{{ environment.inputs.vpc_cidr}}'
+    # Private1:
+      # CIDR: '{{ environment.inputs.private_subnet_one_cidr}}'
+    # Private2:
+      # CIDR: '{{ environment.inputs.private_subnet_two_cidr}}'   
+  
+# Resources:
+  # CloudMapNamespace:
+    # Type: 'AWS::ServiceDiscovery::PrivateDnsNamespace'
+    # Properties:
+      # Name: '{{environment.name}}.local'
+      # Vpc: vpc-0ad0036c43c074175
+  # Cluster:
+    # Type: 'AWS::ECS::Cluster'
+  # ServiceTaskDefExecutionRole:
+    # Type: 'AWS::IAM::Role'
+    # Properties:
+      # AssumeRolePolicyDocument:
+        # Statement:
+          # - Action: 'sts:AssumeRole'
+            # Effect: Allow
+            # Principal:
+              # Service: ecs-tasks.amazonaws.com
+        # Version: 2012-10-17
+      # ManagedPolicyArns:
+        # - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+  # pingSNSTopic:
+    # Type: AWS::SNS::Topic
+    # Properties:
+      # TopicName: !Sub '${AWS::StackName}-ping'
+      # KmsMasterKeyId: 'alias/aws/sns'
+  # pingSNSTopicPolicy:
+    # Type: AWS::SNS::TopicPolicy
+    # DependsOn: pingSNSTopic
+    # Properties:
+      # Topics:
+        # - !Ref pingSNSTopic
+      # PolicyDocument:
+        # Version: '2012-10-17'
+        # Statement:
+          # - Effect: Allow
+            # Principal:
+              # AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
+            # Action:
+              # - sns:Subscribe
+            # Resource: !Ref pingSNSTopic
+            # Condition:
+              # StringEquals:
+                # "sns:Protocol": "sqs"
+# Outputs:
+  # Cluster:
+    # Description: The name of the ECS cluster
+    # Value: !Ref 'Cluster'
+  # ClusterArn:
+    # Description: The ARN of the ECS cluster
+    # Value: !GetAtt 'Cluster.Arn'
+  # ServiceTaskDefExecutionRoleArn:
+    # Description: The ARN of the ECS role
+    # Value: !GetAtt 'ServiceTaskDefExecutionRole.Arn'
+  # SNSTopicArn:
+    # Description: The name of the SNS Topic
+    # Value: !Ref 'pingSNSTopic'
+  # SNSTopicName:
+    # Description: TopicName of the SNS Topic
+    # Value: !GetAtt pingSNSTopic.TopicName
+  # SNSRegion:
+    # Description: Region of the SNS Topic
+    # Value: !Ref 'AWS::Region'
+  # CloudMapNamespaceId:
+    # Description: CloudMap namespace Id
+    # Value: !GetAtt 'CloudMapNamespace.Id'
